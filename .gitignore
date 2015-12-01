@@ -23,7 +23,7 @@ app.properties
 .cproject
 
 # JDT-specific (Eclipse Java Development Tools)
-.classpath
+#.classpath
 
 # Java annotation processor (APT)
 .factorypath
