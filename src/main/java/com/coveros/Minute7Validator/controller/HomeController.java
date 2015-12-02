@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Properties;
 
+import org.apache.commons.mail.EmailException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,7 @@ public class HomeController {
 	ApplicationContext context;
 	@Autowired
 	private JavaMailSender mailSender;
+	
 	// private @Value("#{minute7.accountName}") String m7accountName;
 
 	/**
@@ -70,10 +72,11 @@ public class HomeController {
 	 * 
 	 * @throws IOException
 	 * @throws ParseException
+	 * @throws EmailException 
 	 */
 	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public String test(Locale locale, Model model) throws IOException, ParseException {
-		Properties appProp = (Properties) context.getBean("myPropertiesBean");
+	public String test(Locale locale, Model model) throws IOException, ParseException, EmailException {
+		
 		String filePathTimecardEntries = System.getProperty("user.home")
 				+ "\\data\\timecardEntries\\coveros_inc_time_export.xls.txt";
 		String filePathDependencies = System.getProperty("user.home")
@@ -83,13 +86,14 @@ public class HomeController {
 		jobList = new Hashtable<String, Job>();
 		timecardEntries = new ArrayList<TimecardEntry>();
 		employeeDirectory = new Hashtable<String, Employee>();
-
+		
+		Properties appProp = (Properties) context.getBean("myPropertiesBean");
 		// Initialize data importer
 		DataImporter di = new DataImporter(logger, appProp);
 		// Initialize validator
 		Validator v = new Validator();
 		// initialize notification manager
-		NotificationManager nm = new NotificationManager();
+		NotificationManager nm = new NotificationManager(mailSender);
 
 		// Purge previous timecard data if any
 		di.purgeDataFolder(new File(System.getProperty("user.home") + "\\data\\timecardEntries"));
@@ -101,9 +105,11 @@ public class HomeController {
 		// di.importTimeEntries(filePathTimecardEntries, jobList,
 		// timecardEntries);
 		di.importTimecardEntriesTabDelimitedTXT(filePathTimecardEntries, timecardEntries);
-		// di.importEmails(filePathEmails, employeeDirectory);
+		di.importEmails(filePathEmails, employeeDirectory);
 
 		v.validateTimcardEntries(jobList, timecardEntries);
+		
+		nm.asyncCheckValidityAndSend(timecardEntries, employeeDirectory);
 
 		di.purgeDataFolder(new File(System.getProperty("user.home") + "\\data\\timecardEntries"));
 		return "test";
@@ -115,8 +121,6 @@ public class HomeController {
 	@RequestMapping(value = "/email", method = RequestMethod.GET)
 	public String emailTest(Locale locale, Model model) {
 		logger.info("Welcome home! The client locale is {}.", locale);
-		Properties appProp = (Properties) context.getBean("myPropertiesBean");
-		String aaa = appProp.getProperty("gmail.accountName");
 		Date date = new Date();
 		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 

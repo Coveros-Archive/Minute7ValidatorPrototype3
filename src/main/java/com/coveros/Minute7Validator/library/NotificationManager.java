@@ -7,47 +7,39 @@ import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 
 import com.coveros.Minute7Validator.library.models.Employee;
 import com.coveros.Minute7Validator.library.models.TimecardEntry;
 
 public class NotificationManager {
 
-	public NotificationManager(){
-		
+	private JavaMailSender mailSender;
+
+	public NotificationManager(JavaMailSender mailSender) {
+		this.mailSender = mailSender;
 	}
-	
-	public void asyncCheckValidityAndSend(ArrayList<TimecardEntry> timecardEntries, Hashtable<String, Employee> employeeDirectory) throws EmailException{
-		for (TimecardEntry te:timecardEntries){
-			if (te.getTimecardErrorEnum()!=TimecardErrorEnum.VALID){
+
+	public void asyncCheckValidityAndSend(ArrayList<TimecardEntry> timecardEntries,
+			Hashtable<String, Employee> employeeDirectory) throws EmailException {
+		for (TimecardEntry te : timecardEntries) {
+			if (te.getTimecardErrorEnum() != TimecardErrorEnum.VALID) {
 				sendNotification(te, employeeDirectory.get(te.getEmployee().getName()));
+
 			}
 		}
 	}
-	
-	private void sendNotification (TimecardEntry te, Employee employee) throws EmailException{
-		Email email = new SimpleEmail();
-		email.setHostName("smtp.googlemail.com");
-		email.setSmtpPort(465);
-		email.setAuthenticator(new DefaultAuthenticator("", ""));
-		email.setSSLOnConnect(true);
-		email.setFrom("");
-		email.setSubject("TestMail");
-		email.setMsg("This is a test mail ... :-)");
-		email.addTo("");
-		email.send();
-	}
-	public void sendNotification () throws EmailException{
-		Email email = new SimpleEmail();
-//		email.setHostName("smtp.gmail.com");
-//		email.setSmtpPort(465);
-//		//email.setAuthenticator(new DefaultAuthenticator("", ""));
-//		email.setAuthenticator(new DefaultAuthenticator("", ""));
-//		email.setSSLOnConnect(true);
-		email.setFrom("");
-		email.setSubject("TestMail");
-		email.setMsg("This is a test mail ... :-)");
-		email.addTo("");
-		email.send();
+
+	private void sendNotification(TimecardEntry te, Employee employee) throws EmailException {
+		if (employee != null){
+			if (employee.getName().equals("Devin J Lee")) {
+				SimpleMailMessage email = new SimpleMailMessage();
+				email.setTo(employee.getEmail());
+				email.setSubject("Timecard Error Message");
+				email.setText(te.toString());
+				mailSender.send(email);
+			}
+		}
 	}
 }

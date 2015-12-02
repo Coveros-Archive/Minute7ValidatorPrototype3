@@ -239,11 +239,11 @@ public class DataImporter {
 		FileInputStream fis = new FileInputStream(myFile); // Finds the workbook
 															// instance for XLSX
 															// file
-		HSSFWorkbook myWorkBook = new HSSFWorkbook(fis);
-		// XSSFWorkbook myWorkBook = new XSSFWorkbook (fis); // Return first
+		// HSSFWorkbook myWorkBook = new HSSFWorkbook(fis);
+		XSSFWorkbook myWorkBook = new XSSFWorkbook (fis); // Return first
 		// sheet from the XLSX workbook
-		HSSFSheet mySheet = myWorkBook.getSheetAt(0);
-		// XSSFSheet mySheet = myWorkBook.getSheetAt(0); // Get iterator to all
+		// HSSFSheet mySheet = myWorkBook.getSheetAt(0);
+		XSSFSheet mySheet = myWorkBook.getSheetAt(0); // Get iterator to all
 		// the rows in current sheet
 		Iterator<Row> rowIterator = mySheet.iterator();
 		rowIterator.next();

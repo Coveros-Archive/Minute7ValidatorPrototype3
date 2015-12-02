@@ -25,7 +25,7 @@
 	<authentication-manager>
 	  <authentication-provider>
 	  	<user-service id="userDetailsService" properties="classpath:users.properties"/>
-	    
+	     
 	  </authentication-provider>
 	</authentication-manager>
 
