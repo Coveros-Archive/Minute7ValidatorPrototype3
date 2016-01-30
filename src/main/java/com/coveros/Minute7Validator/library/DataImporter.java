@@ -124,7 +124,7 @@ public class DataImporter {
 			}
 			BillabilityEnum currentBillability = BillabilityEnum.NO;
 
-			switch (columns[3]) {
+			switch (columns[9]) {
 			case "Yes":
 				currentBillability = BillabilityEnum.YES;
 				break;
