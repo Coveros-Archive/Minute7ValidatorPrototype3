@@ -26,6 +26,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.coveros.Minute7Validator.library.DataImporter;
 import com.coveros.Minute7Validator.library.NotificationManager;
@@ -47,7 +48,7 @@ public class HomeController {
 	ApplicationContext context;
 	@Autowired
 	private JavaMailSender mailSender;
-	
+
 	// private @Value("#{minute7.accountName}") String m7accountName;
 
 	/**
@@ -72,21 +73,22 @@ public class HomeController {
 	 * 
 	 * @throws IOException
 	 * @throws ParseException
-	 * @throws EmailException 
+	 * @throws EmailException
 	 */
-	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public String test(Locale locale, Model model) throws IOException, ParseException, EmailException {
-		
-		String filePathTimecardEntries = System.getProperty("user.home")
-				+ "\\data\\timecardEntries\\coveros_inc_time_export.xls.txt";
+	@RequestMapping(value = "/validate/notify", method = RequestMethod.GET)
+	public ModelAndView test(Locale locale, Model model) throws IOException, ParseException, EmailException {
+
+		String filePathTimecardEntries = System.getProperty("user.home") + File.separator + "data" + File.separator
+				+ "timecardEntries" + File.separator + "coveros_inc_time_export.xls.txt";
 		String filePathDependencies = System.getProperty("user.home")
-				+ "\\data\\dependencies\\M7 Entry Dependency Model.xlsx";
-		String filePathEmails = System.getProperty("user.home") + "\\data\\directory\\coveros_directory.xlsx";
+				+ "/data/dependencies/M7 Entry Dependency Model.xlsx";
+		String filePathEmails = System.getProperty("user.home") + File.separator + "data" + File.separator + "directory"
+				+ File.separator + "coveros_directory.xlsx";
 		System.out.println("Loading application...");
 		jobList = new Hashtable<String, Job>();
 		timecardEntries = new ArrayList<TimecardEntry>();
 		employeeDirectory = new Hashtable<String, Employee>();
-		
+
 		Properties appProp = (Properties) context.getBean("myPropertiesBean");
 		// Initialize data importer
 		DataImporter di = new DataImporter(logger, appProp);
@@ -96,10 +98,16 @@ public class HomeController {
 		NotificationManager nm = new NotificationManager(mailSender);
 
 		// Purge previous timecard data if any
-		di.purgeDataFolder(new File(System.getProperty("user.home") + "\\data\\timecardEntries"));
+		di.purgeDataFolder(
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries"
+						+ File.separator + "coveros_inc_time_export.xls.txt"),
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator
+						+ "timecardEntries"));
 
 		// Use Selenium to download the timecard file
+		System.out.println(filePathTimecardEntries);
 		filePathTimecardEntries = di.downloadTimecardDataWithSelenium();
+		System.out.println(filePathTimecardEntries);
 
 		di.importDependencies(filePathDependencies, jobList);
 		// di.importTimeEntries(filePathTimecardEntries, jobList,
@@ -107,12 +115,84 @@ public class HomeController {
 		di.importTimecardEntriesTabDelimitedTXT(filePathTimecardEntries, timecardEntries);
 		di.importEmails(filePathEmails, employeeDirectory);
 
-		v.validateTimcardEntries(jobList, timecardEntries);
-		
-		nm.asyncCheckValidityAndSend(timecardEntries, employeeDirectory);
+		ArrayList<String> report = v.validateTimcardEntries(jobList, timecardEntries);
 
-		di.purgeDataFolder(new File(System.getProperty("user.home") + "\\data\\timecardEntries"));
-		return "test";
+		boolean notify = false;
+		nm.asyncCheckValidityAndSend(timecardEntries, employeeDirectory, notify);
+
+		di.purgeDataFolder(
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries"
+						+ File.separator + "coveros_inc_time_export.xls.txt"),
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator
+						+ "timecardEntries"));
+
+		ModelAndView modelNView = new ModelAndView("test");
+		modelNView.addObject("report", report);
+		return modelNView;
+	}
+
+	/**
+	 * Simply selects the test view to render by returning its name.
+	 * 
+	 * @throws IOException
+	 * @throws ParseException
+	 * @throws EmailException
+	 */
+	@RequestMapping(value = "/validate/dontnotify", method = RequestMethod.GET)
+	public ModelAndView testNoNotification(Locale locale, Model model)
+			throws IOException, ParseException, EmailException {
+
+		String filePathTimecardEntries = System.getProperty("user.home") + File.separator + "data" + File.separator
+				+ "timecardEntries" + File.separator + "coveros_inc_time_export.xls.txt";
+		String filePathDependencies = System.getProperty("user.home")
+				+ "/data/dependencies/M7 Entry Dependency Model.xlsx";
+		String filePathEmails = System.getProperty("user.home") + File.separator + "data" + File.separator + "directory"
+				+ File.separator + "coveros_directory.xlsx";
+		System.out.println("Loading application...");
+		jobList = new Hashtable<String, Job>();
+		timecardEntries = new ArrayList<TimecardEntry>();
+		employeeDirectory = new Hashtable<String, Employee>();
+
+		Properties appProp = (Properties) context.getBean("myPropertiesBean");
+		// Initialize data importer
+		DataImporter di = new DataImporter(logger, appProp);
+		// Initialize validator
+		Validator v = new Validator();
+		// initialize notification manager
+		NotificationManager nm = new NotificationManager(mailSender);
+
+		// Purge previous timecard data if any
+		di.purgeDataFolder(
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries"
+						+ File.separator + "coveros_inc_time_export.xls.txt"),
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator
+						+ "timecardEntries"));
+
+		// Use Selenium to download the timecard file
+		// System.out.println(filePathTimecardEntries);
+		filePathTimecardEntries = di.downloadTimecardDataWithSelenium();
+		System.out.println(filePathTimecardEntries);
+
+		di.importDependencies(filePathDependencies, jobList);
+		// di.importTimeEntries(filePathTimecardEntries, jobList,
+		// timecardEntries);
+		di.importTimecardEntriesTabDelimitedTXT(filePathTimecardEntries, timecardEntries);
+		di.importEmails(filePathEmails, employeeDirectory);
+
+		ArrayList<String> report = v.validateTimcardEntries(jobList, timecardEntries);
+
+		boolean notify = false;
+		nm.asyncCheckValidityAndSend(timecardEntries, employeeDirectory, notify);
+
+		di.purgeDataFolder(
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries"
+						+ File.separator + "coveros_inc_time_export.xls.txt"),
+				new File(System.getProperty("user.home") + File.separator + "data" + File.separator
+						+ "timecardEntries"));
+
+		ModelAndView modelNView = new ModelAndView("test");
+		modelNView.addObject("report", report);
+		return modelNView;
 	}
 
 	/**

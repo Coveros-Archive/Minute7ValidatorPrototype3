@@ -1,5 +1,6 @@
 package com.coveros.Minute7Validator.library.models;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -93,7 +94,8 @@ public class TimecardEntry {
 	}
 	@Override
 	public String toString() {
-		return "TimecardEntry [date=" + date.toString() + ", employee=" + employee.getName() + ", job=" + job.getTitle() + ", service=" + service.getTitle()
+		DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+		return "TimecardEntry [date=" + df.format(date) + ", employee=" + employee.getName() + ", job=" + job.getTitle() + ", service=" + service.getTitle()
 				+ ", payroll=" + payroll.getTitle() + ", billable=" + getBillable() + ", timecardErrorEnum=" + getTimecardErrorEnum() + "]";
 	}
 }

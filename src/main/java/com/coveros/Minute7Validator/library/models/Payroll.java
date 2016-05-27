@@ -7,11 +7,11 @@ public class Payroll {
 	private BillabilityEnum billable;
 	public Payroll (){
 		title="No payroll title";
-		billable=BillabilityEnum.NO;
+		//billable=BillabilityEnum.NO;
 	}
 	public Payroll (String title){
 		this.title=title;
-		billable=BillabilityEnum.NO;
+		//billable=BillabilityEnum.NO;
 	}
 	public String getTitle() {
 		return title;

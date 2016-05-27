@@ -38,11 +38,11 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openqa.selenium.firefox.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.firefox.internal.ProfilesIni;
+//import org.openqa.selenium.firefox.FirefoxDriver;
+//import org.openqa.selenium.firefox.FirefoxProfile;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,7 +60,7 @@ public class DataImporter {
 
 	public DataImporter(Logger logger, Properties appProp) {
 		this.logger = logger;
-		this.appProp=appProp;
+		this.appProp = appProp;
 	}
 
 	public String downloadTimecardDataWithSelenium() throws IOException {
@@ -74,7 +74,8 @@ public class DataImporter {
 
 		FirefoxProfile profile = new FirefoxProfile();
 		profile.setPreference("browser.download.folderList", 2);
-		profile.setPreference("browser.download.dir", System.getProperty("user.home") + "\\data\\timecardEntries");
+		profile.setPreference("browser.download.dir",
+				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
 		profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/force-download");
 		WebDriver driver = new FirefoxDriver(profile);
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
@@ -90,7 +91,8 @@ public class DataImporter {
 		driver.findElement(By.linkText("Logout")).click();
 		driver.quit();
 
-		File directory = new File(System.getProperty("user.home") + "\\data\\timecardEntries");
+		File directory = new File(
+				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
 		File[] files = directory.listFiles((FileFilter) FileFileFilter.FILE);
 		if (files.length != 0)
 
@@ -137,6 +139,7 @@ public class DataImporter {
 			timecardEntries.add(new TimecardEntry(formatter.parse(columns[0]), new Employee(columns[1]),
 					new Job(columns[2]), new Service(columns[3]), new Payroll(columns[5]), currentBillability));
 		}
+		br.close();
 	}
 
 	public void importDependencies(String filePath, Hashtable<String, Job> jobList) throws IOException {
@@ -158,6 +161,18 @@ public class DataImporter {
 		while (rowIterator.hasNext()) {
 			Row row = rowIterator.next(); // For each row, iterate through each
 											// columns
+			if (row.getCell(0) == null) {
+				break;
+			}
+			if (row.getCell(1) == null) {
+				break;
+			}
+			if (row.getCell(2) == null) {
+				break;
+			}
+			// System.out.println(row.getCell(0).getStringCellValue());
+			// System.out.println(row.getCell(1).getStringCellValue());
+			// System.out.println(row.getCell(2).getStringCellValue());
 			jobList.putIfAbsent(row.getCell(0).getStringCellValue(), new Job(row.getCell(0).getStringCellValue()));
 			jobList.get(row.getCell(0).getStringCellValue()).getServices()
 					.putIfAbsent(row.getCell(1).getStringCellValue(), new Service(row.getCell(1).getStringCellValue()));
@@ -165,6 +180,7 @@ public class DataImporter {
 					.getPayrollItems()
 					.putIfAbsent(row.getCell(2).getStringCellValue(), new Payroll(row.getCell(2).getStringCellValue()));
 
+			// By default, the dependency is not billable
 			BillabilityEnum currentBillability = BillabilityEnum.NO;
 
 			switch (row.getCell(3).getStringCellValue()) {
@@ -173,6 +189,9 @@ public class DataImporter {
 				break;
 			case "No":
 				currentBillability = BillabilityEnum.NO;
+				break;
+			case "Either":
+				currentBillability = BillabilityEnum.EITHER;
 				break;
 			}
 
@@ -185,6 +204,12 @@ public class DataImporter {
 				if (jobList.get(row.getCell(0).getStringCellValue()).getServices()
 						.get(row.getCell(1).getStringCellValue()).getPayrollItems()
 						.get(row.getCell(2).getStringCellValue()).getBillable() != currentBillability) {
+					Job fdfdf = jobList.get(row.getCell(0).getStringCellValue());
+					Service fdsa = jobList.get(row.getCell(0).getStringCellValue()).getServices()
+							.get(row.getCell(1).getStringCellValue());
+					Payroll asdf = jobList.get(row.getCell(0).getStringCellValue()).getServices()
+							.get(row.getCell(1).getStringCellValue()).getPayrollItems()
+							.get(row.getCell(2).getStringCellValue());
 					jobList.get(row.getCell(0).getStringCellValue()).getServices()
 							.get(row.getCell(1).getStringCellValue()).getPayrollItems()
 							.get(row.getCell(2).getStringCellValue()).setBillable(BillabilityEnum.EITHER);
@@ -192,6 +217,7 @@ public class DataImporter {
 			}
 		}
 		myWorkBook.close();
+		fis.close();
 	}
 
 	public void importTimeEntries(String filePath, ArrayList<TimecardEntry> timecardEntries) throws IOException {
@@ -232,6 +258,7 @@ public class DataImporter {
 
 		}
 		myWorkBook.close();
+		fis.close();
 	}
 
 	public void importEmails(String filePath, Hashtable<String, Employee> employeeDirectory) throws IOException {
@@ -240,7 +267,7 @@ public class DataImporter {
 															// instance for XLSX
 															// file
 		// HSSFWorkbook myWorkBook = new HSSFWorkbook(fis);
-		XSSFWorkbook myWorkBook = new XSSFWorkbook (fis); // Return first
+		XSSFWorkbook myWorkBook = new XSSFWorkbook(fis); // Return first
 		// sheet from the XLSX workbook
 		// HSSFSheet mySheet = myWorkBook.getSheetAt(0);
 		XSSFSheet mySheet = myWorkBook.getSheetAt(0); // Get iterator to all
@@ -249,16 +276,26 @@ public class DataImporter {
 		rowIterator.next();
 		while (rowIterator.hasNext()) {
 			Row row = rowIterator.next();
+			if (row.getCell(1) == null) {
+				break;
+			}
 			employeeDirectory.put(row.getCell(0).getStringCellValue(),
 					new Employee(row.getCell(0).getStringCellValue(), row.getCell(1).getStringCellValue()));
 
 		}
 
 		myWorkBook.close();
+		fis.close();
 	}
 
-	public void purgeDataFolder(File filepath) throws IOException {
-		FileUtils.cleanDirectory(filepath);
+	public void purgeDataFolder(File filepath, File directoryPath) throws IOException {
+		// FileUtils.cleanDirectory(filepath);
+		if (filepath.exists()) {
+			Path filePathVar = filepath.toPath();
+			Files.delete(filePathVar);
+		}
+		FileUtils.cleanDirectory(directoryPath);
+
 	}
 
 }
