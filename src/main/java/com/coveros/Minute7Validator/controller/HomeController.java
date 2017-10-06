@@ -69,7 +69,7 @@ public class HomeController {
 	}
 
 	/**
-	 * Simply selects the test view to render by returning its name.
+	 * Run the validation program and send notifications.
 	 * 
 	 * @throws IOException
 	 * @throws ParseException
@@ -105,7 +105,7 @@ public class HomeController {
 						+ "timecardEntries"));
 
 		// Use Selenium to download the timecard file
-		System.out.println(filePathTimecardEntries);
+//		System.out.println(filePathTimecardEntries);
 		filePathTimecardEntries = di.downloadTimecardDataWithSelenium();
 		System.out.println(filePathTimecardEntries);
 
@@ -117,7 +117,7 @@ public class HomeController {
 
 		ArrayList<String> report = v.validateTimcardEntries(jobList, timecardEntries);
 
-		boolean notify = false;
+		boolean notify = true;
 		nm.asyncCheckValidityAndSend(timecardEntries, employeeDirectory, notify);
 
 		di.purgeDataFolder(
@@ -132,7 +132,7 @@ public class HomeController {
 	}
 
 	/**
-	 * Simply selects the test view to render by returning its name.
+	 * Run the validation program but do not send notifications.
 	 * 
 	 * @throws IOException
 	 * @throws ParseException
@@ -208,9 +208,9 @@ public class HomeController {
 
 		model.addAttribute("serverTime", formattedDate);
 		SimpleMailMessage email = new SimpleMailMessage();
-		email.setTo("jy4ny@virginia.edu");
-		email.setSubject("FAFAFAFAF");
-		email.setText("greetings!");
+		email.setTo("devin.lee@coveros.com");
+		email.setSubject("Text");
+		email.setText("Greetings!");
 		mailSender.send(email);
 
 		return "home";

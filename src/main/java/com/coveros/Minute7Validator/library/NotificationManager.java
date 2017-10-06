@@ -52,6 +52,7 @@ public class NotificationManager {
 
 			email.setText(messageBody);
 			mailSender.send(email);
+			
 		}
 	}
 }

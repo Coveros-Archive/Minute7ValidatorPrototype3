@@ -77,6 +77,9 @@ public class DataImporter {
 		profile.setPreference("browser.download.dir",
 				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
 		profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/force-download");
+		profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
+		profile.setPreference("startup.homepage_welcome_url.additional",  "about:blank");
+
 		WebDriver driver = new FirefoxDriver(profile);
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 		driver.get(baseUrl + "/");
@@ -87,7 +90,7 @@ public class DataImporter {
 		driver.findElement(By.id("password")).sendKeys(minute7Password);
 		driver.findElement(By.name("submit")).click();
 		driver.get(
-				"https://minute7.com/reports/time_csv/coveros_inc_time_export.xls?report_customer_id%5B%5D=All&report_employee_id%5B%5D=All&report_inventory_item_id%5B%5D=All&report_payroll_item_id%5B%5D=All&reports_start_date=2015-10-22&reports_end_date=2015-11-22&time_approval=&billable=&synced=No&segment_options1=employee_id&segment_options2=&segment_options3=&segment_options5=&export.x=56&export.y=8");
+				"https://www.minute7.com/reports/time_csv/coveros_inc_time_export.xls?report_customer_id%5B%5D=All&report_employee_id%5B%5D=All&report_inventory_item_id%5B%5D=All&report_payroll_item_id%5B%5D=All&reports_start_date=2016-06-07&reports_end_date=2016-07-07&time_approval=&billable=&synced=No&segment_options1=employee_id&segment_options2=&segment_options3=&segment_options5=&export.x=49&export.y=12");
 		driver.findElement(By.linkText("Logout")).click();
 		driver.quit();
 
