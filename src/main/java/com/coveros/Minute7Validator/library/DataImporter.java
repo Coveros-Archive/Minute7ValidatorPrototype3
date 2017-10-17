@@ -129,7 +129,7 @@ public class DataImporter {
 			}
 			BillabilityEnum currentBillability = BillabilityEnum.NO;
 
-			switch (columns[9]) {
+			switch (columns[10]) {
 			case "Yes":
 				currentBillability = BillabilityEnum.YES;
 				break;
@@ -139,8 +139,8 @@ public class DataImporter {
 			}
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
-			timecardEntries.add(new TimecardEntry(formatter.parse(columns[0]), new Employee(columns[1]),
-					new Job(columns[2]), new Service(columns[3]), new Payroll(columns[5]), currentBillability));
+			timecardEntries.add(new TimecardEntry(formatter.parse(columns[0]), new Employee(columns[2]),
+					new Job(columns[3]), new Service(columns[4]), new Payroll(columns[6]), currentBillability));
 		}
 		br.close();
 	}
@@ -298,7 +298,5 @@ public class DataImporter {
 			Files.delete(filePathVar);
 		}
 		FileUtils.cleanDirectory(directoryPath);
-
 	}
-
 }
