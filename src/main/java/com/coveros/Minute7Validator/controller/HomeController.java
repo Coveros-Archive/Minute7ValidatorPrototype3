@@ -77,7 +77,7 @@ public class HomeController {
 	 */
 	@RequestMapping(value = "/validate/notify", method = RequestMethod.GET)
 	public ModelAndView test(Locale locale, Model model) throws IOException, ParseException, EmailException {
-
+		
 		String filePathTimecardEntries = System.getProperty("user.home") + File.separator + "data" + File.separator
 				+ "timecardEntries" + File.separator + "coveros_inc_time_export.xls.txt";
 		String filePathDependencies = System.getProperty("user.home")

@@ -27,7 +27,12 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
@@ -64,6 +69,9 @@ public class DataImporter {
 	}
 
 	public String downloadTimecardDataWithSelenium() throws IOException {
+		System.setProperty("webdriver.gecko.driver",
+				System.getProperty("user.home") + File.separator + "data" + File.separator + "geckodriver" + File.separator + "geckodriver.exe");
+
 		// WebDriver driver=new FirefoxDriver();
 		// driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 
@@ -72,27 +80,65 @@ public class DataImporter {
 		String minute7Password = appProp.getProperty("minute7.password");
 		// loader.getResource("classpath:/data");
 
-		FirefoxProfile profile = new FirefoxProfile();
-		profile.setPreference("browser.download.folderList", 2);
-		profile.setPreference("browser.download.dir",
-				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
-		profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/force-download");
-		profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
-		profile.setPreference("startup.homepage_welcome_url.additional",  "about:blank");
+		// FirefoxProfile profile = new FirefoxProfile();
+		// profile.setPreference("browser.download.folderList", 2);
+		// profile.setPreference("browser.download.dir",
+		// System.getProperty("user.home") + File.separator + "data" + File.separator +
+		// "timecardEntries");
+		// profile.setPreference("browser.helperApps.neverAsk.saveToDisk",
+		// "application/force-download");
+		// profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
+		// profile.setPreference("startup.homepage_welcome_url.additional",
+		// "about:blank");
 
-		WebDriver driver = new FirefoxDriver(profile);
-		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-		driver.get(baseUrl + "/");
+		FirefoxOptions firefoxOptions = new FirefoxOptions();
+
+		firefoxOptions.addPreference("browser.download.folderList", 2);
+		firefoxOptions.addPreference("browser.download.dir",
+				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
+		firefoxOptions.addPreference("browser.helperApps.neverAsk.saveToDisk", "application/force-download");
+		firefoxOptions.addPreference("browser.startup.homepage_override.mstone", "ignore");
+		firefoxOptions.addPreference("startup.homepage_welcome_url.additional", "about:blank");
+
+		WebDriver driver = new FirefoxDriver(firefoxOptions);
+		driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+		driver.get(baseUrl);
 		driver.findElement(By.linkText("Sign In")).click();
 		driver.findElement(By.id("email")).clear();
 		driver.findElement(By.id("email")).sendKeys(minute7AccountName);
 		driver.findElement(By.id("password")).clear();
 		driver.findElement(By.id("password")).sendKeys(minute7Password);
 		driver.findElement(By.name("submit")).click();
-		driver.get(
-				"https://www.minute7.com/reports/time_csv/coveros_inc_time_export.xls?report_customer_id%5B%5D=All&report_employee_id%5B%5D=All&report_inventory_item_id%5B%5D=All&report_payroll_item_id%5B%5D=All&reports_start_date=2016-06-07&reports_end_date=2016-07-07&time_approval=&billable=&synced=No&segment_options1=employee_id&segment_options2=&segment_options3=&segment_options5=&export.x=49&export.y=12");
-		driver.findElement(By.linkText("Logout")).click();
-		driver.quit();
+
+		final Runnable stuffToDo = new Thread() {
+			@Override
+			public void run() {
+				driver.navigate().to(
+						"https://www.minute7.com/reports/time_csv/coveros_inc_time_export.xls?report_customer_id%5B%5D=All&report_employee_id%5B%5D=All&report_inventory_item_id%5B%5D=All&report_payroll_item_id%5B%5D=All&reports_start_date=2016-06-07&reports_end_date=2016-07-07&time_approval=&billable=&synced=No&segment_options1=employee_id&segment_options2=&segment_options3=&segment_options5=&export.x=49&export.y=12");
+			}
+		};
+
+		final ExecutorService executor = Executors.newSingleThreadExecutor();
+		final Future future = executor.submit(stuffToDo);
+		executor.shutdown(); // This does not cancel the already-scheduled task.
+
+		try {
+			future.get(3, TimeUnit.SECONDS);
+		} catch (InterruptedException ie) {
+			/* Handle the interruption. Or ignore it. */
+		} catch (ExecutionException ee) {
+			/* Handle the error. Or ignore it. */
+		} catch (TimeoutException te) {
+			/* Handle the timeout. Or ignore it. */
+		}
+		if (!executor.isTerminated())
+			executor.shutdownNow();
+
+		// driver.navigate().to(
+		// "https://www.minute7.com/reports/time_csv/coveros_inc_time_export.xls?report_customer_id%5B%5D=All&report_employee_id%5B%5D=All&report_inventory_item_id%5B%5D=All&report_payroll_item_id%5B%5D=All&reports_start_date=2016-06-07&reports_end_date=2016-07-07&time_approval=&billable=&synced=No&segment_options1=employee_id&segment_options2=&segment_options3=&segment_options5=&export.x=49&export.y=12");
+		//driver.findElement(By.linkText("Logout")).click();
+		//driver.quit();
+		//driver.close();
 
 		File directory = new File(
 				System.getProperty("user.home") + File.separator + "data" + File.separator + "timecardEntries");
@@ -120,7 +166,7 @@ public class DataImporter {
 			throws IOException, ParseException {
 		BufferedReader br = new BufferedReader(new FileReader(filePath));
 		String line;
-		String delimiter = "\t";
+		String delimiter = "\",\"";
 		br.readLine();
 		while ((line = br.readLine()) != null) {
 			String[] columns = line.split(delimiter);
