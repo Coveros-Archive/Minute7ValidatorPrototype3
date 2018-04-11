@@ -101,7 +101,7 @@ public class DataImporter {
 		firefoxOptions.addPreference("startup.homepage_welcome_url.additional", "about:blank");
 
 		WebDriver driver = new FirefoxDriver(firefoxOptions);
-		driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.get(baseUrl);
 		driver.findElement(By.linkText("Sign In")).click();
 		driver.findElement(By.id("email")).clear();
@@ -123,7 +123,7 @@ public class DataImporter {
 		executor.shutdown(); // This does not cancel the already-scheduled task.
 
 		try {
-			future.get(3, TimeUnit.SECONDS);
+			future.get(10, TimeUnit.SECONDS);
 		} catch (InterruptedException ie) {
 			/* Handle the interruption. Or ignore it. */
 		} catch (ExecutionException ee) {
